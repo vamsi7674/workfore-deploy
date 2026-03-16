@@ -69,9 +69,9 @@ pipeline {
             steps {
                 echo '── Starting MySQL + Spring Boot via Docker Compose ──'
                 withCredentials([
-                    string(credentialsId: 'mysql-root-password',  secretVariable: 'MYSQL_ROOT_PASS'),
-                    string(credentialsId: 'mysql-user-password',  secretVariable: 'MYSQL_USER_PASS'),
-                    string(credentialsId: 'spring-mail-password', secretVariable: 'MAIL_PASS')
+                    string(credentialsId: 'mysql-root-password',  variable: 'MYSQL_ROOT_PASS'),
+                    string(credentialsId: 'mysql-user-password',  variable: 'MYSQL_USER_PASS'),
+                    string(credentialsId: 'spring-mail-password', variable: 'MAIL_PASS')
                 ]) {
                     sh """
                         cd ${DEPLOY_DIR}
