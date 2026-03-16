@@ -23,7 +23,7 @@ pipeline {
         EC2_SSH_KEY_ID = 'ec2-ssh-key'
         // ── Frontend ─────────────────────────────────────────────
         FRONTEND_DIR   = 'final deploye/RevWorkForce-Frontend'
-        S3_BUCKET      = 'your-hrms-frontend-bucket'   // ← UPDATE with your S3 bucket name
+        S3_BUCKET      = 'hrms-portal-vamsi'
         AWS_REGION     = 'ap-south-1'
         AWS_CREDS_ID   = 'aws-s3-credentials'
     }
