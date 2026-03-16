@@ -38,9 +38,13 @@ cd "${REMOTE_DIR}"
 docker compose down --remove-orphans 2>/dev/null || true
 sleep 3
 
-# Step 3: Build & start containers
-echo "🔨 Building Docker image and starting containers..."
-docker compose --env-file "${ENV_FILE}" up -d --build
+# Step 3: Build Docker image first (avoids buildx version requirement)
+echo "🔨 Building Docker image..."
+docker build -t workforce-backend:latest .
+
+# Step 4: Start containers
+echo "▶️  Starting containers with Docker Compose..."
+docker compose --env-file "${ENV_FILE}" up -d
 
 # Step 4: Wait for backend to be healthy
 echo "⏳ Waiting for backend to become healthy (up to 90s)..."
