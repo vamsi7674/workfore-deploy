@@ -1,20 +1,11 @@
-FROM maven:3.9-eclipse-temurin-17 AS build
-
-WORKDIR /app
-
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
-
-COPY src ./src
-RUN mvn clean package -Dmaven.test.skip=true -B
-
+# Simple Dockerfile — JAR is pre-built by Jenkins Maven, just package it
 FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-COPY --from=build /app/target/Workforce-0.0.1-SNAPSHOT.jar app.jar
+# Copy the pre-built JAR (built by Maven in Jenkins pipeline)
+COPY Workforce-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
-
+ENTRYPOINT ["java", "-Xms256m", "-Xmx512m", "-jar", "app.jar"]
