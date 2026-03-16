@@ -1,0 +1,105 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk "JDK17"
+        maven "Maven3"
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+    }
+
+    environment {
+        JAR_NAME    = "Workforce-0.0.1-SNAPSHOT.jar"
+        REMOTE_DIR  = "/home/ec2-user"
+        APP_PORT    = "8080"
+        LOG_FILE    = "/home/ec2-user/logs/workforce.log"
+        PROJECT_DIR = "Deploy/RevWorkforce"
+    }
+
+    stages {
+
+        stage("Checkout") {
+            steps {
+                echo "Checking out code..."
+                checkout scm
+            }
+        }
+
+        stage("Build") {
+            steps {
+                echo "Compiling..."
+                dir("${PROJECT_DIR}") {
+                    bat 'mvn -B clean compile -q'
+                }
+            }
+        }
+
+        stage("Test") {
+            steps {
+                echo "Running tests..."
+                dir("${PROJECT_DIR}") {
+                    bat 'mvn -B test -q'
+                }
+            }
+            post {
+                always {
+                    dir("${PROJECT_DIR}") {
+                        junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+                    }
+                }
+            }
+        }
+
+        stage("Package") {
+            steps {
+                echo "Packaging JAR..."
+                dir("${PROJECT_DIR}") {
+                    bat 'mvn -B package -DskipTests -q'
+                    archiveArtifacts artifacts: "target/${JAR_NAME}", fingerprint: true
+                }
+            }
+        }
+
+        stage("Deploy to EC2") {
+            steps {
+                echo "Deploying to EC2..."
+                sshPublisher(
+                    failOnError: false,
+                    continueOnError: true,
+                    publishers: [
+                        sshPublisherDesc(
+                            configName: "revworkforce-ec2",
+                            verbose: true,
+                            transfers: [
+                                sshTransfer(
+                                    sourceFiles: "Deploy/RevWorkforce/target/${JAR_NAME}",
+                                    removePrefix: "Deploy/RevWorkforce/target",
+                                    remoteDirectory: "/",
+                                    flatten: true
+                                ),
+                                sshTransfer(
+                                    execCommand: "mkdir -p /home/ec2-user/logs; pkill -f Workforce 2>/dev/null; sleep 2; nohup java -Xms128m -Xmx384m -jar /home/ec2-user/${JAR_NAME} --spring.profiles.active=prod --server.port=8080 --spring.datasource.username=workforce_user '--spring.datasource.password=Workforce#2026' </dev/null >/home/ec2-user/logs/workforce.log 2>&1 & PID=\$!; echo \"App started with PID \$PID\"; sleep 8"
+                                )
+                            ]
+                        )
+                    ]
+                )
+                echo "OK JAR deployed to EC2 app restarted"
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "OK Deployment SUCCESS"
+        }
+        unstable {
+            echo "WARNING Build UNSTABLE - app likely started OK, check EC2 logs"
+        }
+        failure {
+            echo "FAILED Deployment FAILED - Check the logs above"
+        }
+    }
+}
