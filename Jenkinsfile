@@ -58,6 +58,7 @@ pipeline {
                     cp '${BACKEND_DIR}/target/${JAR_NAME}' ${DEPLOY_DIR}/
                     cp '${BACKEND_DIR}/docker-compose.yml' ${DEPLOY_DIR}/
                     cp '${BACKEND_DIR}/deploy.sh' ${DEPLOY_DIR}/
+                    cp '${BACKEND_DIR}/Dockerfile' ${DEPLOY_DIR}/
                     chmod +x ${DEPLOY_DIR}/deploy.sh
                     echo '✅ Files copied to ${DEPLOY_DIR}'
                     ls -la ${DEPLOY_DIR}/
