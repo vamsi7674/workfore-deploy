@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: mysql:8.0
+    container_name: workforce-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: workforce_db
+      MYSQL_USER: workforce_user
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - workforce-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  backend:
+    image: workforce-backend:latest
+    container_name: workforce-backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/workforce_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: workforce_user
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+      SERVER_PORT: 8080
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - workforce-net
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  workforce-net:
+    driver: bridge

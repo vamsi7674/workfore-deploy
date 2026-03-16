@@ -1,4 +1,9 @@
 HELP.md
+
+### Secrets — never commit these
+.env
+*.pem
+*.key
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
