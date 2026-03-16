@@ -1,6 +1,6 @@
 #!/bin/bash
 # =================================================================
-# deploy.sh — Executed ON the EC2 instance by Jenkins SSH command
+# deploy.sh — Executed directly by Jenkins on the same EC2 instance
 # Requires these env vars to be pre-set by Jenkins:
 #   MYSQL_ROOT_PASSWORD, MYSQL_PASSWORD, SPRING_MAIL_PASSWORD,
 #   JAR_NAME, APP_PORT
@@ -8,7 +8,7 @@
 
 set -e
 
-REMOTE_DIR="/home/ec2-user/workforce"
+REMOTE_DIR="$(pwd)"
 ENV_FILE="${REMOTE_DIR}/.env"
 
 echo "🚀 Starting HRMS Backend Deployment..."
