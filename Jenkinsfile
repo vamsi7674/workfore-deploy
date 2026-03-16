@@ -16,11 +16,8 @@ pipeline {
         // ── Backend ─────────────────────────────────────────────
         JAR_NAME       = 'Workforce-0.0.1-SNAPSHOT.jar'
         BACKEND_DIR    = 'final deploye/RevWorkforce'
-        // ── EC2 ─────────────────────────────────────────────────
-        REMOTE_HOST    = '13.201.140.55'
-        REMOTE_USER    = 'ec2-user'
-        REMOTE_DIR     = '/home/ec2-user/workforce'
-        EC2_SSH_KEY_ID = 'ec2-ssh-key'
+        // ── EC2 (Jenkins runs ON this server — use local paths directly) ──
+        DEPLOY_DIR     = '/home/ec2-user/workforce'
         // ── Frontend ─────────────────────────────────────────────
         FRONTEND_DIR   = 'final deploye/RevWorkForce-Frontend'
         S3_BUCKET      = 'hrms-portal-vamsi'
@@ -53,47 +50,37 @@ pipeline {
             }
         }
 
-        stage('Backend: Transfer to EC2') {
+        stage('Backend: Copy Files Locally') {
             steps {
-                echo '── Transferring files to EC2 ──'
-                withCredentials([sshUserPrivateKey(
-                    credentialsId: "${EC2_SSH_KEY_ID}",
-                    keyFileVariable: 'SSH_KEY'
-                )]) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no -i \$SSH_KEY ${REMOTE_USER}@${REMOTE_HOST} \
-                            'mkdir -p ${REMOTE_DIR}'
-                        scp -o StrictHostKeyChecking=no -i \$SSH_KEY \
-                            '${BACKEND_DIR}/target/${JAR_NAME}' \
-                            ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/
-                        scp -o StrictHostKeyChecking=no -i \$SSH_KEY \
-                            '${BACKEND_DIR}/docker-compose.yml' \
-                            ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/
-                        scp -o StrictHostKeyChecking=no -i \$SSH_KEY \
-                            '${BACKEND_DIR}/deploy.sh' \
-                            ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/
-                    """
-                }
+                echo '── Copying files to deploy directory (Jenkins runs on EC2) ──'
+                sh """
+                    mkdir -p ${DEPLOY_DIR}
+                    cp '${BACKEND_DIR}/target/${JAR_NAME}' ${DEPLOY_DIR}/
+                    cp '${BACKEND_DIR}/docker-compose.yml' ${DEPLOY_DIR}/
+                    cp '${BACKEND_DIR}/deploy.sh' ${DEPLOY_DIR}/
+                    chmod +x ${DEPLOY_DIR}/deploy.sh
+                    echo '✅ Files copied to ${DEPLOY_DIR}'
+                    ls -la ${DEPLOY_DIR}/
+                """
             }
         }
 
-        stage('Backend: Deploy on EC2') {
+        stage('Backend: Deploy Docker Compose') {
             steps {
-                echo '── Deploying Docker Compose stack on EC2 ──'
+                echo '── Starting MySQL + Spring Boot via Docker Compose ──'
                 withCredentials([
-                    sshUserPrivateKey(credentialsId: "${EC2_SSH_KEY_ID}", keyFileVariable: 'SSH_KEY'),
                     string(credentialsId: 'mysql-root-password',  secretVariable: 'MYSQL_ROOT_PASS'),
                     string(credentialsId: 'mysql-user-password',  secretVariable: 'MYSQL_USER_PASS'),
                     string(credentialsId: 'spring-mail-password', secretVariable: 'MAIL_PASS')
                 ]) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no -i \$SSH_KEY ${REMOTE_USER}@${REMOTE_HOST} \
-                        "MYSQL_ROOT_PASSWORD='\$MYSQL_ROOT_PASS' \
-                         MYSQL_PASSWORD='\$MYSQL_USER_PASS' \
-                         SPRING_MAIL_PASSWORD='\$MAIL_PASS' \
-                         JAR_NAME='${JAR_NAME}' \
-                         APP_PORT='8080' \
-                         bash ${REMOTE_DIR}/deploy.sh"
+                        cd ${DEPLOY_DIR}
+                        export MYSQL_ROOT_PASSWORD="\$MYSQL_ROOT_PASS"
+                        export MYSQL_PASSWORD="\$MYSQL_USER_PASS"
+                        export SPRING_MAIL_PASSWORD="\$MAIL_PASS"
+                        export JAR_NAME="${JAR_NAME}"
+                        export APP_PORT="8080"
+                        bash ./deploy.sh
                     """
                 }
                 echo '✅ Backend deployed!'
