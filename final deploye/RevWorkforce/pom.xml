@@ -84,12 +84,7 @@
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- H2 Database for testing -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
+        <!-- MySQL is used for all environments including tests — H2 removed -->
         <!-- JUnit Platform Suite for running all tests from one file -->
         <dependency>
             <groupId>org.junit.platform</groupId>
