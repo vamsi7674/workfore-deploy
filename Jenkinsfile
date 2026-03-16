@@ -17,7 +17,7 @@ pipeline {
         JAR_NAME       = 'Workforce-0.0.1-SNAPSHOT.jar'
         BACKEND_DIR    = 'final deploye/RevWorkforce'
         // ── EC2 (Jenkins runs ON this server — use local paths directly) ──
-        DEPLOY_DIR     = '/home/ec2-user/workforce'
+        DEPLOY_DIR     = '/var/lib/jenkins/workforce'
         // ── Frontend ─────────────────────────────────────────────
         FRONTEND_DIR   = 'final deploye/RevWorkForce-Frontend'
         S3_BUCKET      = 'hrms-portal-vamsi'
