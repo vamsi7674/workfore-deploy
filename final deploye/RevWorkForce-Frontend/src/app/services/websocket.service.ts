@@ -2,6 +2,7 @@ import { Injectable, signal, OnDestroy } from '@angular/core';
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import { AuthService } from './auth.service';
 import { Subject } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface PresenceEvent {
     email: string;
@@ -26,7 +27,7 @@ export class WebSocketService implements OnDestroy {
         const token = this.authService.getAccessToken();
         if (!token) return;
         this.client = new Client({
-            brokerURL: 'ws://localhost:8080/ws',
+            brokerURL: environment.wsUrl || 'ws://localhost:8080/ws',
             connectHeaders: {
                 Authorization: `Bearer ${token}`
             },
