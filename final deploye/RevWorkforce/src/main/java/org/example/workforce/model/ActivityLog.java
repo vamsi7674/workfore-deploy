@@ -27,7 +27,7 @@ public class ActivityLog {
     private Integer logId;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "performed_by")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "department", "designation", "manager"})
     private Employee performedBy;
     @Column(nullable = false, length = 200)
     private String action;
