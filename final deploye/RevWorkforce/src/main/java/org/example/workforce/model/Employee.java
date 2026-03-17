@@ -26,6 +26,7 @@ import java.time.LocalDate;
 @Builder
 @ToString(exclude = {"manager", "department", "designation"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "department", "designation", "manager"})
 public class Employee {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
